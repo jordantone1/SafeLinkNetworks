@@ -1657,17 +1657,79 @@ function changeCount(btn, delta) {
       return;
     }
 
-    // Loading state
     submitted = true;
     btn.classList.add('loading');
     btn.disabled = true;
 
-    // Simulate submission
-    await new Promise(r => setTimeout(r, 1800));
+    try {
+      // Collect counter values from the layout builder
+      const getValue = (name) => {
+        const el = document.querySelector(`.count-val[data-name="${name}"]`);
+        return el ? el.textContent : '0';
+      };
 
-    btn.style.display = 'none';
-    success.classList.add('visible');
-    success.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const data = new FormData(form);
+      const payload = {
+        business:       data.get('business'),
+        name:           data.get('name'),
+        phone:          data.get('phone'),
+        email:          data.get('email'),
+        address:        data.get('address'),
+        bizType:        data.get('bizType'),
+        hasInternet:    data.get('hasInternet'),
+        provider:       data.get('provider'),
+        needsInternet:  data.get('needsInternet') === 'on' ? 'yes' : 'no',
+        modemLocation:  data.get('modemLocation'),
+        wiredComputers: getValue('wiredComputers'),
+        pos:            getValue('pos'),
+        kds:            getValue('kds'),
+        cameras:        getValue('cameras'),
+        otherWired:     getValue('otherWired'),
+        laptops:        getValue('laptops'),
+        tablets:        getValue('tablets'),
+        wiredPhones:    getValue('wiredPhones'),
+        wirelessPhones: getValue('wirelessPhones'),
+        wiredPrinters:  getValue('wiredPrinters'),
+        wifiPrinters:   getValue('wifiPrinters'),
+        deviceNotes:    data.get('deviceNotes'),
+        needsPhone:     data.get('needsPhone'),
+        voiceUsers:     data.get('voiceUsers'),
+        deskPhones:     data.get('deskPhones'),
+        callInOut:      data.get('callInOut'),
+        portNumbers:    data.get('portNumbers'),
+        cabling:        data.get('cabling'),
+        rack:           data.get('rack'),
+        closet:         data.get('closet'),
+        mounting:       data.get('mounting'),
+        addon_cameras:  data.get('addon_cameras') === 'on' ? 'yes' : 'no',
+        addon_tvs:      data.get('addon_tvs') === 'on' ? 'yes' : 'no',
+        addon_audio:    data.get('addon_audio') === 'on' ? 'yes' : 'no',
+        finalNotes:     data.get('finalNotes'),
+        layoutData:     data.get('layoutData')
+      };
+
+      const res = await fetch('https://safelink-hggxfyfxb0etbvb3.centralus-01.azurewebsites.net/api/submitQuote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await res.json();
+
+      if (result.success) {
+        btn.style.display = 'none';
+        success.classList.add('visible');
+        success.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } else {
+        throw new Error(result.error || 'Submission failed');
+      }
+
+    } catch (err) {
+      submitted = false;
+      btn.classList.remove('loading');
+      btn.disabled = false;
+      alert('Something went wrong: ' + err.message + '. Please try again.');
+    }
   });
 })();
 
